@@ -1,0 +1,272 @@
+{
+  "parameters": {
+    "parameters": {}
+  },
+  "initialNodes": [
+    "599a37f2-6501-4df8-9619-955bdd28fe71"
+  ],
+  "nodes": {
+    "599a37f2-6501-4df8-9619-955bdd28fe71": {
+      "nodeType": ".v2019_3_1.LoadSqlProxy",
+      "name": "Superstore For Prep Flow Swap (default)",
+      "id": "599a37f2-6501-4df8-9619-955bdd28fe71",
+      "baseType": "input",
+      "nextNodes": [
+        {
+          "namespace": "Default",
+          "nextNodeId": "98cbd70a-0480-4f00-92ef-a6d6bde22e10",
+          "nextNamespace": "Default"
+        }
+      ],
+      "serialize": false,
+      "description": null,
+      "connectionId": "8f24d859-6fc7-4e99-b9e1-e53f0ec41211",
+      "connectionAttributes": {
+        "dbname": "SuperstoreForPrepFlowSwap",
+        "projectName": "default",
+        "datasourceName": "Superstore For Prep Flow Swap"
+      },
+      "fields": [
+        {
+          "name": "Category",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 14,
+          "isGenerated": false
+        },
+        {
+          "name": "City",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 9,
+          "isGenerated": false
+        },
+        {
+          "name": "Country/Region",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 8,
+          "isGenerated": false
+        },
+        {
+          "name": "Customer ID",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 5,
+          "isGenerated": false
+        },
+        {
+          "name": "Customer Name",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 6,
+          "isGenerated": false
+        },
+        {
+          "name": "Discount",
+          "type": "real",
+          "collation": null,
+          "caption": "",
+          "ordinal": 19,
+          "isGenerated": false
+        },
+        {
+          "name": "Order Date",
+          "type": "date",
+          "collation": null,
+          "caption": "",
+          "ordinal": 2,
+          "isGenerated": false
+        },
+        {
+          "name": "Order ID",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 1,
+          "isGenerated": false
+        },
+        {
+          "name": "Postal Code",
+          "type": "integer",
+          "collation": null,
+          "caption": "",
+          "ordinal": 11,
+          "isGenerated": false
+        },
+        {
+          "name": "Product ID",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 13,
+          "isGenerated": false
+        },
+        {
+          "name": "Product Name",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 16,
+          "isGenerated": false
+        },
+        {
+          "name": "Profit",
+          "type": "real",
+          "collation": null,
+          "caption": "",
+          "ordinal": 20,
+          "isGenerated": false
+        },
+        {
+          "name": "Quantity",
+          "type": "integer",
+          "collation": null,
+          "caption": "",
+          "ordinal": 18,
+          "isGenerated": false
+        },
+        {
+          "name": "Region",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 12,
+          "isGenerated": false
+        },
+        {
+          "name": "Row ID",
+          "type": "integer",
+          "collation": null,
+          "caption": "",
+          "ordinal": 0,
+          "isGenerated": false
+        },
+        {
+          "name": "Sales",
+          "type": "real",
+          "collation": null,
+          "caption": "",
+          "ordinal": 17,
+          "isGenerated": false
+        },
+        {
+          "name": "Segment",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 7,
+          "isGenerated": false
+        },
+        {
+          "name": "Ship Date",
+          "type": "date",
+          "collation": null,
+          "caption": "",
+          "ordinal": 3,
+          "isGenerated": false
+        },
+        {
+          "name": "Ship Mode",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 4,
+          "isGenerated": false
+        },
+        {
+          "name": "State/Province",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 10,
+          "isGenerated": false
+        },
+        {
+          "name": "Sub-Category",
+          "type": "string",
+          "collation": "LEN_RUS_S2",
+          "caption": "",
+          "ordinal": 15,
+          "isGenerated": false
+        }
+      ],
+      "actions": [
+        {
+          "nodeType": ".v1.RenameColumn",
+          "columnName": "Row ID",
+          "rename": "Tuple ID",
+          "name": "renamed Row ID to Tuple ID 1",
+          "id": "dddbd8e5-044f-41d3-bf0f-cf92f4fe9718",
+          "baseType": "transform",
+          "nextNodes": [],
+          "serialize": false,
+          "description": null
+        }
+      ],
+      "debugModeRowLimit": 393216,
+      "originalDataTypes": {},
+      "randomSampling": null,
+      "updateTimestamp": null,
+      "restrictedFields": {},
+      "userRenamedFields": {},
+      "selectedFields": null,
+      "samplingType": null,
+      "groupByFields": null,
+      "filters": [],
+      "relation": {
+        "type": "table",
+        "table": "[sqlproxy]"
+      }
+    },
+    "98cbd70a-0480-4f00-92ef-a6d6bde22e10": {
+      "nodeType": ".v1.PublishExtract",
+      "name": "Output 2",
+      "id": "98cbd70a-0480-4f00-92ef-a6d6bde22e10",
+      "baseType": "output",
+      "nextNodes": [],
+      "serialize": false,
+      "description": null,
+      "projectName": "default",
+      "projectLuid": "22446c5a-f069-4aa7-867a-eeafc0030e30",
+      "datasourceName": "Output Flow from Superstore for Field Swap",
+      "datasourceDescription": "this is the reconnected flow WITHOUT Row ID -> Tuple ID",
+      "serverUrl": "https://10ax.online.tableau.com/#/site/carpdemo"
+    }
+  },
+  "connections": {
+    "8f24d859-6fc7-4e99-b9e1-e53f0ec41211": {
+      "connectionType": ".v1.SqlConnection",
+      "id": "8f24d859-6fc7-4e99-b9e1-e53f0ec41211",
+      "name": "https://10ax.online.tableau.com (CarpDemo)",
+      "isPackaged": false,
+      "connectionAttributes": {
+        "server": "https://10ax.online.tableau.com",
+        "port": "443",
+        "query-category": "Data",
+        "siteUrlName": "carpdemo",
+        "channel": "https",
+        "class": "sqlproxy",
+        "directory": "/dataserver",
+        "odbc-native-protocol": "yes"
+      }
+    }
+  },
+  "dataConnections": {},
+  "connectionIds": [
+    "8f24d859-6fc7-4e99-b9e1-e53f0ec41211"
+  ],
+  "dataConnectionIds": [],
+  "nodeProperties": {},
+  "extensibility": {},
+  "selection": [],
+  "majorVersion": 1,
+  "minorVersion": 5,
+  "documentId": "79011af7-2a8c-4be3-ac69-c2ae37864eed",
+  "obfuscatorId": "3f956d44-8aaa-4fde-9dd4-c049c9eb7803"
+}

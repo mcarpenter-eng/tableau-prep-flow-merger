@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tableau Prep Flow Merger</title>
+  <style>
+    :root {
+      --border: #d0d7de;
+      --border-strong: #1f6feb;
+      --bg: #f6f8fa;
+      --bg-strong: #ddf4ff;
+      --text: #1f2328;
+      --muted: #656d76;
+      --ok: #1a7f37;
+      --warn: #9a6700;
+      --err: #cf222e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 880px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: var(--text);
+      background: #fff;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); margin-top: 0; }
+    .row { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .drop {
+      flex: 1;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 2rem 1rem;
+      text-align: center;
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .drop.dragover { border-color: var(--border-strong); background: var(--bg-strong); }
+    .drop.has-file { border-style: solid; border-color: var(--ok); background: #fff; }
+    .drop h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+    .drop p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+    .drop .filename { color: var(--ok); font-weight: 600; word-break: break-all; }
+    .drop input[type=file] { display: none; }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--border-strong);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled { background: #8c959f; cursor: not-allowed; }
+    button:not(:disabled):hover { background: #1158c7; }
+    .log {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .log.visible { display: block; }
+    .log .ok   { color: var(--ok); }
+    .log .warn { color: var(--warn); }
+    .log .err  { color: var(--err); }
+  </style>
+</head>
+<body>
+  <h1>Tableau Prep Flow Merger</h1>
+  <p class="subtitle">
+    Drop a source and destination <code>.tfl</code> file.
+    The destination keeps everything &mdash; node IDs, connections, projects, sites &mdash;
+    and only the transform <code>actions</code> arrays are pulled in from the source.
+  </p>
+
+  <form id="merge-form">
+    <div class="row">
+      <label class="drop" data-slot="source">
+        <h3>Source file</h3>
+        <p>Drop here or click to choose</p>
+        <input type="file" name="source" accept=".json,.tfl,application/json">
+      </label>
+      <label class="drop" data-slot="destination">
+        <h3>Destination file</h3>
+        <p>Drop here or click to choose</p>
+        <input type="file" name="destination" accept=".json,.tfl,application/json">
+      </label>
+    </div>
+    <button id="merge-btn" type="submit" disabled>Merge Files</button>
+  </form>
+
+  <div id="log" class="log"></div>
+
+  <script>
+    const form = document.getElementById('merge-form');
+    const btn  = document.getElementById('merge-btn');
+    const log  = document.getElementById('log');
+    const drops = document.querySelectorAll('.drop');
+
+    function refreshState() {
+      const src = form.elements['source'].files[0];
+      const dst = form.elements['destination'].files[0];
+      btn.disabled = !(src && dst);
+    }
+
+    drops.forEach(drop => {
+      const input = drop.querySelector('input[type=file]');
+      const p = drop.querySelector('p');
+
+      drop.addEventListener('dragover', e => {
+        e.preventDefault();
+        drop.classList.add('dragover');
+      });
+      drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+      drop.addEventListener('drop', e => {
+        e.preventDefault();
+        drop.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+      input.addEventListener('change', () => {
+        if (input.files[0]) {
+          drop.classList.add('has-file');
+          p.innerHTML = '<span class="filename">' + input.files[0].name + '</span>';
+        }
+        refreshState();
+      });
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Merging...';
+      log.className = 'log';
+      log.textContent = '';
+
+      const fd = new FormData(form);
+      const res = await fetch('/merge', { method: 'POST', body: fd });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        log.className = 'log visible';
+        log.innerHTML = '<span class="err">Error: ' + (err.error || res.statusText) + '</span>';
+        btn.disabled = false;
+        btn.textContent = 'Merge Files';
+        return;
+      }
+
+      // Trigger download
+      const blob = await res.blob();
+      const dispo = res.headers.get('Content-Disposition') || '';
+      const match = dispo.match(/filename="?([^"]+)"?/);
+      const name = match ? match[1] : 'merged.json';
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      // Show merge log
+      const logRaw = res.headers.get('X-Merge-Log');
+      if (logRaw) {
+        const lines = JSON.parse(logRaw);
+        log.className = 'log visible';
+        log.innerHTML = lines.map(l => {
+          const cls = l.startsWith('OK') ? 'ok' : l.startsWith('WARN') ? 'warn' : 'err';
+          return '<span class="' + cls + '">' + l + '</span>';
+        }).join('\n') + '\n\nDownloaded: ' + name;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Merge Files';
+    });
+  </script>
+</body>
+</html>
