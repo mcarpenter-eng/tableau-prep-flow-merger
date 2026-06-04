@@ -1,12 +1,15 @@
 """
-Local web UI for merging Tableau Prep flow actions.
+Web UI for merging Tableau Prep flow actions.
 
-Run:
+Local dev:
     python3.13 app.py
     # then open http://localhost:5050
+
+Production (Heroku, etc.) is served by gunicorn — see Procfile.
 """
 import io
 import json
+import os
 from pathlib import Path
 
 from flask import Flask, render_template, request, send_file, jsonify
@@ -57,4 +60,5 @@ def merge():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5050, debug=True)
+    port = int(os.environ.get("PORT", 5050))
+    app.run(host="0.0.0.0", port=port, debug=False)
