@@ -88,62 +88,81 @@ def load_flow(path: Path) -> tuple[dict, bytes | None, str]:
     return read_flow_bytes(path.read_bytes())
 
 
-def node_match_key(node: dict) -> tuple:
-    """Stable key used to match a source node to a destination node.
+def node_fallback_key(node: dict) -> tuple:
+    """Fallback match key used when source and destination node IDs don't align.
 
-    Input nodes are matched by the datasource they load (dbname +
-    datasourceName), since their node IDs and display names differ across
-    environments. Other nodes fall back to (baseType, nodeType, name).
+    Input nodes match on (dbname, datasourceName); other nodes match on
+    (baseType, nodeType, name). Note: this key is not always unique — a flow
+    can join the same Salesforce object multiple times — so callers should
+    prefer node-ID matching whenever possible and only fall back to this key
+    when an ID match isn't available.
     """
     base_type = node.get("baseType")
     if base_type == "input":
         attrs = node.get("connectionAttributes", {}) or {}
-        return (
-            "input",
-            attrs.get("dbname"),
-            attrs.get("datasourceName"),
-        )
+        return ("input", attrs.get("dbname"), attrs.get("datasourceName"))
     return (base_type, node.get("nodeType"), node.get("name"))
 
 
 def merge_actions(source: dict, destination: dict) -> tuple[dict, list[str]]:
-    """Return (merged_flow, log_lines). Does not mutate inputs."""
+    """Return (merged_flow, log_lines). Does not mutate inputs.
+
+    Matching strategy: when a source node's ID exists in the destination,
+    apply actions directly to that node. This is the common case — flows
+    typically start as copies of one another, so node UUIDs line up. Only
+    when an ID match is missing do we fall back to the looser (dbname,
+    datasourceName) / (baseType, nodeType, name) key.
+    """
     merged = json.loads(json.dumps(destination))  # deep copy
     log: list[str] = []
 
-    dest_nodes_by_key: dict[tuple, list[str]] = {}
+    dest_node_ids = set(merged.get("nodes", {}).keys())
+
+    # Build the fallback index from destination nodes whose IDs are NOT also
+    # in the source, so a fallback match never overrides a direct ID match.
+    src_node_ids = set(source.get("nodes", {}).keys())
+    fallback_index: dict[tuple, list[str]] = {}
     for node_id, node in merged.get("nodes", {}).items():
-        dest_nodes_by_key.setdefault(node_match_key(node), []).append(node_id)
+        if node_id in src_node_ids:
+            continue
+        fallback_index.setdefault(node_fallback_key(node), []).append(node_id)
 
     for src_node_id, src_node in source.get("nodes", {}).items():
         src_actions = src_node.get("actions")
         if src_actions is None:
             continue  # output nodes etc. don't have an actions array
 
-        key = node_match_key(src_node)
-        matches = dest_nodes_by_key.get(key, [])
+        if src_node_id in dest_node_ids:
+            target_ids = [src_node_id]
+            match_via = "id"
+        else:
+            key = node_fallback_key(src_node)
+            target_ids = fallback_index.get(key, [])
+            match_via = f"fallback {key}"
 
-        if not matches:
+        if not target_ids:
             if src_actions:
                 log.append(
                     f"WARN: source node '{src_node.get('name')}' "
                     f"({src_node_id}) has {len(src_actions)} action(s) but "
-                    f"no matching destination node (key={key})."
+                    f"no matching destination node ({match_via})."
                 )
             continue
 
-        if len(matches) > 1:
+        if len(target_ids) > 1:
             log.append(
                 f"WARN: source node '{src_node.get('name')}' matched "
-                f"{len(matches)} destination nodes; applying actions to all."
+                f"{len(target_ids)} destination nodes via {match_via}; "
+                f"applying actions to all."
             )
 
-        for dest_node_id in matches:
+        for dest_node_id in target_ids:
             dest_node = merged["nodes"][dest_node_id]
             before = dest_node.get("actions", []) or []
             dest_node["actions"] = json.loads(json.dumps(src_actions))
             log.append(
-                f"OK:   '{src_node.get('name')}' -> '{dest_node.get('name')}' "
+                f"OK ({match_via}): '{src_node.get('name')}' -> "
+                f"'{dest_node.get('name')}' "
                 f"({len(before)} action(s) -> {len(src_actions)} action(s))"
             )
 
